@@ -1,0 +1,1 @@
+# aws-mail-sns-notification
