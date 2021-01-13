@@ -1,0 +1,42 @@
+{
+    "name": "multiplier/aws-mail-sns-notification",
+    "description": "A package to handle notification from AWS SNS triggered by AWS SES configuration set events",
+    "type": "library",
+    "license": "Apache 2.0",
+    "authors": [
+        {
+            "name": "Felipe Farias",
+            "email": "felipe@multiplier.com.br"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "laravel/framework": "~6|~7|~8",
+        "renanfenrich/laravel-tenant-subdomain": "^1.0",
+        "aws/aws-php-sns-message-validator": "^1.6",
+        "aws/aws-sdk-php": "^3.171"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "9.5.x-dev",
+        "mockery/mockery": "^1.1",
+        "orchestra/testbench": "~3|~4|~5|~6",
+        "sempro/phpunit-pretty-print": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Multiplier\\AwsMailSnsNotification\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Multiplier\\AwsMailSnsNotification\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Multiplier\\AwsMailSnsNotification\\AwsMailSnsNotificationServiceProvider"
+            ]
+        }
+    }
+}
