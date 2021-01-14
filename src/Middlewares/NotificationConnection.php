@@ -3,7 +3,11 @@
 namespace Multiplier\AwsMailSnsNotification\Middlewares;
 
 use Closure;
+use Aws\Sns\Message;
+use Aws\Sns\MessageValidator;
 use Dlimars\Tenant\TenantManager;
+use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Client;
 use Multiplier\AwsMailSnsNotification\Models\NotificationMessage;
 use Multiplier\AwsMailSnsNotification\Models\NotificationMail;
 
@@ -21,19 +25,51 @@ class NotificationConnection
 
     public function handle($request, Closure $next)
     {
-        $notificationMessage = new NotificationMessage();
-        $notificationMail = new NotificationMail($notificationMessage->getMail());
+        $message = Message::fromRawPostData();
 
-        $request->replace([
-            'message' => $notificationMessage,
-            'mail' => $notificationMail
-        ]);
+        $validator = new MessageValidator();
 
-        $notificationMailTenant = $notificationMail->getHeaders()->getTenant();
-        $this->tenantManager->setCurrentTenant($notificationMailTenant);
+        if ($validator->isValid($message)) {
 
-        if ($this->tenantManager->reconnectDatabaseUsing($notificationMailTenant)) {
-            return $next($request);
+            $request->request->add([
+                'notificationType' => $message['Type']
+            ]);
+
+            if ($message['Type'] === 'SubscriptionConfirmation') {
+
+                // Confirm the subscription by sending a GET request to the SubscribeURL
+                Log::info($message['SubscribeURL']);
+
+                $client = new Client();
+                $client->get($message['SubscribeURL']);
+
+                $next($request);
+
+            } elseif ($message['Type'] === 'Notification') {
+
+                $notificationMessage = new NotificationMessage(json_decode($message['Message']));
+                $notificationMail = new NotificationMail($notificationMessage->getMail());
+
+                $request->request->add([
+                    'message' => $notificationMessage,
+                    'mail' => $notificationMail
+                ]);
+
+                $notificationMailTenant = $notificationMail->getHeaders()->getTenant();
+                $this->tenantManager->setCurrentTenant($notificationMailTenant);
+
+                if ($this->tenantManager->reconnectDatabaseUsing($notificationMailTenant)) {
+                    return $next($request);
+                }
+
+            } elseif ($message['Type'] === 'UnsubscribeConfirmation') {
+
+                // Unsubscribed in error? You can resubscribe by visiting the endpoint
+                // provided as the message's SubscribeURL field.
+                Log::info('SNS Resubscribe URL' . $message['SubscribeURL']);
+
+                $next($request);
+            }
         }
     }
 }

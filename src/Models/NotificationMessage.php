@@ -2,9 +2,6 @@
 
 namespace Multiplier\AwsMailSnsNotification\Models;
 
-use Aws\Sns\Message;
-use Aws\Sns\MessageValidator;
-
 class NotificationMessage
 {
     /**
@@ -25,18 +22,11 @@ class NotificationMessage
      */
     private $mail;
 
-    public function __construct()
+    public function __construct($message)
     {
-        $message = Message::fromRawPostData();
-
-        $validator = new MessageValidator();
-
-        if ($validator->isValid($message)) {
-            $this->message = json_decode($message['Message']);
-
-            $this->eventType = $this->message->eventType;
-            $this->mail = $this->message->mail;
-        }
+        $this->message = $message;
+        $this->eventType = $this->message->eventType;
+        $this->mail = $this->message->mail;
     }
 
     /**
